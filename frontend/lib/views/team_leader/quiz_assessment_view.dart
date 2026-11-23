@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -1109,6 +1110,8 @@ class _QuizAssessmentViewState extends State<QuizAssessmentView>
                     final String end = formatTimestampMinutes(s['end_window']);
                     final int attempts = safeInt(s['max_attempts'], 1);
                     final int pending = safeInt(s['pending_reviews']);
+                    final int submittedCount = safeInt(s['submitted_count']);
+                    final int totalAttempts = safeInt(s['total_attempts']);
                     final int quizId = safeInt(s['quiz_id']);
 
                     return DataRow(
@@ -1122,29 +1125,64 @@ class _QuizAssessmentViewState extends State<QuizAssessmentView>
                         DataCell(Text('$attempts Max')),
                         DataCell(
                           pending > 0
-                              ? TextButton.icon(
+                              ? ElevatedButton.icon(
                                   icon: const Icon(Icons.rate_review_rounded,
-                                      size: 16, color: AppTheme.warning),
-                                  label: Text('$pending to review',
-                                      style: const TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          color: AppTheme.warning)),
+                                      size: 15),
+                                  label: Text('$pending to review'),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: const Color(0xFFFEF3C7),
+                                    foregroundColor: const Color(0xFFB45309),
+                                    elevation: 0,
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 10, vertical: 6),
+                                    shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(6)),
+                                  ),
                                   onPressed: () => _showAttemptsReviewDialog(
                                     scheduleId: schedId,
                                     quizId: quizId,
                                     quizTitle: title,
                                   ),
                                 )
-                              : TextButton.icon(
-                                  icon: const Icon(Icons.visibility_outlined,
-                                      size: 16),
-                                  label: const Text('View answers'),
-                                  onPressed: () => _showAttemptsReviewDialog(
-                                    scheduleId: schedId,
-                                    quizId: quizId,
-                                    quizTitle: title,
-                                  ),
-                                ),
+                              : submittedCount > 0
+                                  ? ElevatedButton.icon(
+                                      icon: const Icon(Icons.visibility_rounded,
+                                          size: 15),
+                                      label: Text(
+                                          'View answers ($submittedCount submitted)'),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor:
+                                            const Color(0xFFEFF6FF),
+                                        foregroundColor: AppTheme.primaryBlue,
+                                        elevation: 0,
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 10, vertical: 6),
+                                        shape: RoundedRectangleBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(6)),
+                                      ),
+                                      onPressed: () =>
+                                          _showAttemptsReviewDialog(
+                                        scheduleId: schedId,
+                                        quizId: quizId,
+                                        quizTitle: title,
+                                      ),
+                                    )
+                                  : TextButton.icon(
+                                      icon: const Icon(Icons.visibility_outlined,
+                                          size: 15,
+                                          color: AppTheme.textMuted),
+                                      label: const Text('No submissions yet',
+                                          style: TextStyle(
+                                              color: AppTheme.textMuted,
+                                              fontSize: 12)),
+                                      onPressed: () =>
+                                          _showAttemptsReviewDialog(
+                                        scheduleId: schedId,
+                                        quizId: quizId,
+                                        quizTitle: title,
+                                      ),
+                                    ),
                         ),
                         DataCell(
                           IconButton(
@@ -2221,15 +2259,23 @@ class _AttemptReviewDialogState extends State<_AttemptReviewDialog> {
       _loadError = null;
     });
     try {
-      final results = await Future.wait([
-        _api.get(
-            '${ApiConfig.baseUrl}/tl/schedules/${widget.scheduleId}/attempts'),
-        _api.get('${ApiConfig.tlQuizzes}/${widget.quizId}'),
-      ]);
+      final attemptsRes = await _api.get(
+          '${ApiConfig.baseUrl}/tl/schedules/${widget.scheduleId}/attempts');
+      final attemptsList = (attemptsRes['attempts'] as List?) ?? [];
+      List<dynamic> questionsList = (attemptsRes['questions'] as List?) ?? [];
+
+      if (questionsList.isEmpty && widget.quizId > 0) {
+        try {
+          final quizRes =
+              await _api.get('${ApiConfig.tlQuizzes}/${widget.quizId}');
+          questionsList = (quizRes['questions'] as List?) ?? [];
+        } catch (_) {}
+      }
+
       if (!mounted) return;
       setState(() {
-        _attempts = results[0]['attempts'] ?? [];
-        _questions = results[1]['questions'] ?? [];
+        _attempts = attemptsList;
+        _questions = questionsList;
         _isLoading = false;
       });
     } catch (e) {
@@ -2358,7 +2404,13 @@ class _AttemptReviewDialogState extends State<_AttemptReviewDialog> {
             ),
           ),
           IconButton(
+            icon: const Icon(Icons.refresh_rounded),
+            tooltip: 'Refresh answers',
+            onPressed: _load,
+          ),
+          IconButton(
             icon: const Icon(Icons.close_rounded),
+            tooltip: 'Close',
             onPressed: () => Navigator.pop(context),
           ),
         ],
@@ -2390,9 +2442,42 @@ class _AttemptReviewDialogState extends State<_AttemptReviewDialog> {
                       ],
                     )
                   : _attempts.isEmpty
-                      ? const Padding(
-                          padding: EdgeInsets.symmetric(vertical: 24),
-                          child: Text('No intern has attempted this test yet.'),
+                      ? Center(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                                vertical: 36, horizontal: 20),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.assignment_turned_in_outlined,
+                                    size: 48,
+                                    color:
+                                        AppTheme.textMuted.withOpacity(0.5)),
+                                const SizedBox(height: 12),
+                                const Text(
+                                  'No intern has submitted this assessment yet',
+                                  style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 15,
+                                      color: AppTheme.textPrimary),
+                                ),
+                                const SizedBox(height: 6),
+                                const Text(
+                                  'When assigned interns take and submit this scheduled test, their full answers, scores, and review options will be listed here automatically.',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                      fontSize: 12,
+                                      color: AppTheme.textMuted),
+                                ),
+                                const SizedBox(height: 16),
+                                OutlinedButton.icon(
+                                  icon: const Icon(Icons.refresh, size: 16),
+                                  label: const Text('Refresh Submissions'),
+                                  onPressed: _load,
+                                ),
+                              ],
+                            ),
+                          ),
                         )
                       : ListView.separated(
                           shrinkWrap: true,
@@ -2423,16 +2508,41 @@ class _AttemptReviewDialogState extends State<_AttemptReviewDialog> {
                                 : needsReview
                                     ? AppTheme.warningLight
                                     : AppTheme.successLight;
-                            final Map<String, dynamic>? reviewData =
-                                a['review_data'] is Map
-                                    ? Map<String, dynamic>.from(
-                                        a['review_data'])
-                                    : null;
-                            final Map<String, dynamic> answers =
-                                a['submitted_answers'] is Map
-                                    ? Map<String, dynamic>.from(
-                                        a['submitted_answers'])
-                                    : {};
+                            Map<String, dynamic> answers = {};
+                            if (a['submitted_answers'] is Map) {
+                              answers = (a['submitted_answers'] as Map).map(
+                                  (k, v) => MapEntry(k.toString(), v));
+                            } else if (a['submitted_answers'] is String &&
+                                (a['submitted_answers'] as String)
+                                    .trim()
+                                    .isNotEmpty) {
+                              try {
+                                final decoded =
+                                    jsonDecode(a['submitted_answers']);
+                                if (decoded is Map) {
+                                  answers = decoded.map(
+                                      (k, v) => MapEntry(k.toString(), v));
+                                }
+                              } catch (_) {}
+                            }
+
+                            Map<String, dynamic>? reviewData;
+                            if (a['review_data'] is Map) {
+                              reviewData = (a['review_data'] as Map).map(
+                                  (k, v) => MapEntry(k.toString(), v));
+                            } else if (a['review_data'] is String &&
+                                (a['review_data'] as String)
+                                    .trim()
+                                    .isNotEmpty) {
+                              try {
+                                final decoded = jsonDecode(a['review_data']);
+                                if (decoded is Map) {
+                                  reviewData = decoded.map(
+                                      (k, v) => MapEntry(k.toString(), v));
+                                }
+                              } catch (_) {}
+                            }
+
                             final bool saving =
                                 _savingAttempts.contains(attemptId);
 
@@ -2512,23 +2622,36 @@ class _AttemptReviewDialogState extends State<_AttemptReviewDialog> {
                                           safeInt(q['marks'], 10);
                                       final bool isWritten =
                                           q['question_type'] == 'short_answer';
-                                      final String answer =
-                                          (answers[qid.toString()] ?? '')
-                                              .toString();
-                                      final bool answered =
-                                          answer.trim().isNotEmpty;
-                                      final List<dynamic> options =
-                                          q['options'] is List
-                                              ? q['options'] as List<dynamic>
-                                              : const [];
+                                      final String answer = (answers[qid.toString()] ??
+                                              answers[qid] ??
+                                              '')
+                                          .toString()
+                                          .trim();
+                                      final bool answered = answer.isNotEmpty;
+
+                                      List<dynamic> options = [];
+                                      if (q['options'] is List) {
+                                        options = q['options'] as List<dynamic>;
+                                      } else if (q['options'] is String &&
+                                          (q['options'] as String)
+                                              .trim()
+                                              .isNotEmpty) {
+                                        try {
+                                          final decoded =
+                                              jsonDecode(q['options']);
+                                          if (decoded is List) options = decoded;
+                                        } catch (_) {}
+                                      }
+
                                       final String correct =
                                           (q['correct_answer'] ?? '')
-                                              .toString();
+                                              .toString()
+                                              .trim();
                                       final bool mcqCorrect = !isWritten &&
                                           answered &&
                                           correct.isNotEmpty &&
-                                          answer.trim().toLowerCase() ==
-                                              correct.trim().toLowerCase();
+                                          answer.toLowerCase() ==
+                                              correct.toLowerCase();
 
                                       return Container(
                                         margin:

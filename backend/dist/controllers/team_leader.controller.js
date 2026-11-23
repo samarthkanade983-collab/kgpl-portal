@@ -586,6 +586,8 @@ export async function getTestSchedules(req, res) {
         const [rows] = await pool.query(`
       SELECT ts.*, q.title as quiz_title, q.duration_minutes, q.passing_marks, b.name as batch_name, b.batch_code, u.name as scheduler_name,
              (SELECT COUNT(*) FROM quiz_attempts qa WHERE qa.test_schedule_id = ts.id AND qa.needs_review = 1) as pending_reviews,
+             (SELECT COUNT(*) FROM quiz_attempts qa WHERE qa.test_schedule_id = ts.id AND qa.status = 'submitted') as submitted_count,
+             (SELECT COUNT(*) FROM quiz_attempts qa WHERE qa.test_schedule_id = ts.id) as total_attempts,
              (SELECT GROUP_CONCAT(u2.name ORDER BY u2.name SEPARATOR ', ') FROM test_schedule_interns ti JOIN users u2 ON u2.id = ti.user_id WHERE ti.schedule_id = ts.id) as assigned_interns
       FROM test_schedules ts
       JOIN quizzes q ON ts.quiz_id = q.id
@@ -691,14 +693,19 @@ export async function getScheduleAttempts(req, res) {
             res.status(404).json({ error: 'Test schedule not found' });
             return;
         }
+        const [scheduleRows] = await pool.query(`SELECT ts.*, q.id as quiz_id, q.title as quiz_title, q.total_marks, q.passing_marks, q.duration_minutes
+       FROM test_schedules ts
+       JOIN quizzes q ON ts.quiz_id = q.id
+       WHERE ts.id = ?`, [scheduleId]);
+        const scheduleInfo = scheduleRows[0] || null;
         const [rows] = await pool.query(`SELECT qa.id, qa.user_id, qa.status, qa.total_score, qa.is_passed, qa.needs_review,
               qa.submitted_answers, qa.review_data, qa.reviewed_at, qa.start_time, qa.end_time,
               u.name as intern_name, ip.intern_code
        FROM quiz_attempts qa
        JOIN users u ON qa.user_id = u.id
        LEFT JOIN intern_profiles ip ON u.id = ip.user_id
-       WHERE qa.test_schedule_id = ?
-       ORDER BY qa.needs_review DESC, qa.id DESC`, [scheduleId]);
+       WHERE (qa.test_schedule_id = ? OR (qa.quiz_id = ? AND qa.user_id IN (SELECT user_id FROM test_schedule_interns WHERE schedule_id = ?)))
+       ORDER BY qa.needs_review DESC, qa.id DESC`, [scheduleId, scheduleInfo?.quiz_id || 0, scheduleId]);
         for (const row of rows) {
             if (typeof row.submitted_answers === 'string') {
                 try {
@@ -713,7 +720,20 @@ export async function getScheduleAttempts(req, res) {
                 catch (_) { }
             }
         }
-        res.json({ attempts: rows });
+        let questions = [];
+        if (scheduleInfo) {
+            const [qRows] = await pool.query('SELECT * FROM quiz_questions WHERE quiz_id = ? ORDER BY sort_order ASC, id ASC', [scheduleInfo.quiz_id]);
+            questions = qRows;
+            for (const q of questions) {
+                if (typeof q.options === 'string') {
+                    try {
+                        q.options = JSON.parse(q.options);
+                    }
+                    catch (_) { }
+                }
+            }
+        }
+        res.json({ attempts: rows, quiz: scheduleInfo, questions });
     }
     catch (error) {
         console.error('TL getScheduleAttempts error:', error);
