@@ -721,6 +721,18 @@ class _QuizAssessmentViewState extends State<QuizAssessmentView>
           Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
+              OutlinedButton.icon(
+                icon: const Icon(Icons.add_task_rounded, size: 18),
+                label: const Text('Create Question Paper'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppTheme.primaryBlue,
+                  side: const BorderSide(color: AppTheme.primaryBlue),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                ),
+                onPressed: () => _showCreateQuizDialog(),
+              ),
+              const SizedBox(width: 12),
               ElevatedButton.icon(
                 icon: const Icon(Icons.alarm_add_rounded, size: 18),
                 label: const Text('Schedule Test for Interns'),
@@ -811,8 +823,18 @@ class _QuizAssessmentViewState extends State<QuizAssessmentView>
                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
             const SizedBox(height: 6),
             const Text(
-                'Once a question paper is available, click "Schedule Test for Interns" above to set an online test for your interns.',
+                'Create a question paper first, then click "Schedule Test for Interns" to assign it.',
                 style: TextStyle(color: AppTheme.textMuted)),
+            const SizedBox(height: 16),
+            ElevatedButton.icon(
+              icon: const Icon(Icons.add, size: 18),
+              label: const Text('Create Question Paper Now'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.primaryBlue,
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              ),
+              onPressed: () => _showCreateQuizDialog(),
+            ),
           ],
         ),
       );
