@@ -19,7 +19,14 @@ app.use((req, res, next) => {
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('X-Frame-Options', 'DENY');
     res.setHeader('Referrer-Policy', 'no-referrer');
-    res.setHeader('Content-Security-Policy', "default-src 'none'; frame-ancestors 'none'");
+    const isApiPath = req.path.startsWith('/api/') || req.path.startsWith('/uploads/') || req.path === '/health';
+    res.setHeader('Content-Security-Policy', isApiPath
+        ? "default-src 'none'; frame-ancestors 'none'"
+        // Flutter web portal: needs wasm, inline styles, blob/data URLs and https assets (fonts, CanvasKit).
+        : "default-src 'self'; script-src 'self' 'wasm-unsafe-eval' 'unsafe-inline' https://www.gstatic.com; " +
+            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com https://www.gstatic.com; " +
+            "img-src 'self' data: blob: https:; media-src 'self' blob: data: https:; connect-src 'self' data: blob: https://www.gstatic.com https://fonts.gstatic.com; " +
+            "worker-src 'self' blob:; frame-ancestors 'none'");
     res.setHeader('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
     res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
     // Uploaded media is embedded by the portal, which runs on another port.
@@ -109,6 +116,10 @@ app.use((req, res) => {
 });
 // Global Error Handler
 app.use((err, req, res, next) => {
+    // Client aborted request (e.g. video scrub/close or tab switch) - safe to ignore
+    if (err?.code === 'ECONNABORTED' || err?.message === 'Request aborted') {
+        return;
+    }
     console.error('Unhandled server error:', err);
     if (res.headersSent) {
         next(err);
@@ -125,8 +136,10 @@ app.use((err, req, res, next) => {
 process.on('unhandledRejection', (reason) => {
     console.error('Unhandled promise rejection:', reason);
 });
+import { ensureDatabaseTablesAndSeed } from './utils/autoSeedDatabase.js';
 async function bootstrap() {
     await testConnection();
+    await ensureDatabaseTablesAndSeed();
     await ensureCertificateTable();
     await ensureTaskAssignmentsTable();
     await ensureCourseModuleTestTables();

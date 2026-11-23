@@ -161,8 +161,11 @@ process.on('unhandledRejection', (reason) => {
   console.error('Unhandled promise rejection:', reason);
 });
 
+import { ensureDatabaseTablesAndSeed } from './utils/autoSeedDatabase.js';
+
 async function bootstrap() {
   await testConnection();
+  await ensureDatabaseTablesAndSeed();
   await ensureCertificateTable();
   await ensureTaskAssignmentsTable();
   await ensureCourseModuleTestTables();
