@@ -275,7 +275,7 @@ class _CourseModuleTestEditorDialogState
                     'Question ${index + 1}',
                     style: const TextStyle(
                       fontWeight: FontWeight.bold,
-                      color: AppTheme.textPrimary,
+                      color: AppTheme.primaryNavy,
                     ),
                   ),
                 ),
