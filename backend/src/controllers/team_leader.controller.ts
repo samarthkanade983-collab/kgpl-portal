@@ -35,10 +35,10 @@ function removeStoredUpload(uploadPath?: string | null): void {
 
 async function ownsQuiz(quizId: number, req: AuthenticatedRequest): Promise<boolean> {
   if (isHrAdmin(req)) return true;
-  const [rows]: any = await pool.query('SELECT id FROM quizzes WHERE id = ? AND created_by = ?', [
-    quizId,
-    req.user!.id,
-  ]);
+  const [rows]: any = await pool.query(
+    'SELECT id FROM quizzes WHERE id = ? AND (created_by = ? OR created_by IS NULL OR created_by IN (SELECT id FROM users WHERE role IN ("hr_admin", "team_leader")))',
+    [quizId, req.user!.id]
+  );
   return rows.length > 0;
 }
 
@@ -440,7 +440,7 @@ export async function getQuizzes(req: AuthenticatedRequest, res: Response): Prom
     const params: any[] = [];
     let whereClause = '';
     if (!isHrAdmin(req)) {
-      whereClause = 'WHERE q.created_by = ?';
+      whereClause = 'WHERE (q.created_by = ? OR q.created_by IS NULL OR q.created_by IN (SELECT id FROM users WHERE role IN ("hr_admin", "team_leader")))';
       params.push(req.user!.id);
     }
 
@@ -743,7 +743,7 @@ export async function getTestSchedules(req: AuthenticatedRequest, res: Response)
     const params: any[] = [];
     let whereClause = '';
     if (!isHrAdmin(req)) {
-      whereClause = 'WHERE ts.created_by = ?';
+      whereClause = 'WHERE (ts.created_by = ? OR ts.created_by IS NULL OR ts.created_by IN (SELECT id FROM users WHERE role IN ("hr_admin", "team_leader")))';
       params.push(req.user!.id);
     }
 

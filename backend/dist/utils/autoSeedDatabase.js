@@ -6,16 +6,23 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 export async function ensureDatabaseTablesAndSeed() {
     try {
-        // Check if users or departments table already exists and has records
-        const [tables] = await pool.query('SHOW TABLES LIKE "users"');
-        if (tables.length > 0) {
-            const [count] = await pool.query('SELECT COUNT(*) as c FROM users');
-            if (count[0]?.c > 0) {
-                console.log(`ℹ️ Database already initialized with ${count[0].c} users.`);
-                return;
+        // Check if courses and quizzes are already populated
+        let alreadyPopulated = false;
+        try {
+            const [courses] = await pool.query('SELECT COUNT(*) as c FROM courses');
+            const [quizzes] = await pool.query('SELECT COUNT(*) as c FROM quizzes');
+            if ((courses[0]?.c || 0) > 0 && (quizzes[0]?.c || 0) > 0) {
+                alreadyPopulated = true;
             }
         }
-        console.log('🌱 Cloud database is empty. Automatically initializing full database schema & seed data...');
+        catch {
+            alreadyPopulated = false;
+        }
+        if (alreadyPopulated && process.env.FORCE_RESTORE_DB !== 'true') {
+            console.log('ℹ️ Database already initialized with full courses and quizzes.');
+            return;
+        }
+        console.log('🌱 Restoring complete database dump with all courses, modules, videos, quizzes, and users...');
         const candidatePaths = [
             path.resolve(__dirname, '../../full_database_dump.sql'),
             path.resolve(__dirname, '../full_database_dump.sql'),
@@ -32,18 +39,25 @@ export async function ensureDatabaseTablesAndSeed() {
             .split(/;\r?\n/)
             .map((s) => s.trim())
             .filter((s) => s.length > 0 && !s.startsWith('--'));
+        try {
+            await pool.query('SET FOREIGN_KEY_CHECKS = 0;');
+        }
+        catch (_) { }
         for (const statement of statements) {
             try {
                 await pool.query(statement);
             }
             catch (err) {
-                // Log non-fatal errors but continue
-                if (!err.message?.includes('already exists')) {
+                if (!err.message?.includes('already exists') && !err.message?.includes('Duplicate entry')) {
                     console.warn('Seed statement notice:', err.message?.slice(0, 100));
                 }
             }
         }
-        console.log('✅ Full database successfully initialized and seeded with all courses, users, and quizzes!');
+        try {
+            await pool.query('SET FOREIGN_KEY_CHECKS = 1;');
+        }
+        catch (_) { }
+        console.log('✅ Full database successfully initialized and seeded with all courses, users, videos, and quizzes!');
     }
     catch (error) {
         console.error('Database auto-initialization error:', error);
