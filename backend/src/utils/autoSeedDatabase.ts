@@ -22,6 +22,11 @@ export async function ensureDatabaseTablesAndSeed(): Promise<void> {
 
     if (alreadyPopulated && process.env.FORCE_RESTORE_DB !== 'true') {
       console.log('ℹ️ Database already initialized with full courses and quizzes.');
+      try {
+        await pool.query(
+          'UPDATE test_schedules SET end_window = DATE_ADD(NOW(), INTERVAL 30 DAY) WHERE is_active = 1 AND end_window < NOW()'
+        );
+      } catch (_) {}
       return;
     }
 
@@ -61,6 +66,9 @@ export async function ensureDatabaseTablesAndSeed(): Promise<void> {
 
     try {
       await pool.query('SET FOREIGN_KEY_CHECKS = 1;');
+      await pool.query(
+        'UPDATE test_schedules SET end_window = DATE_ADD(NOW(), INTERVAL 30 DAY) WHERE is_active = 1 AND end_window < NOW()'
+      );
     } catch (_) {}
 
     console.log('✅ Full database successfully initialized and seeded with all courses, users, videos, and quizzes!');

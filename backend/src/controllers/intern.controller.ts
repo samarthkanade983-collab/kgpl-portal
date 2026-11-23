@@ -87,8 +87,9 @@ export async function getInternDashboardMetrics(req: AuthenticatedRequest, res: 
       [userId]
     );
     const profile = profileRows[0] || null;
-    const batchId = profile?.batch_id;
-    const departmentId = profile?.department_id || 0;
+    const batchId = profile?.batch_id ? Number(profile.batch_id) : null;
+    const departmentId = Number(profile?.department_id || 0);
+    const assignedTlId = Number(profile?.assigned_team_leader_id || 0);
 
     // 2. Courses assigned directly to this intern
     const [assignedCourses]: any = await pool.query(
@@ -123,21 +124,31 @@ export async function getInternDashboardMetrics(req: AuthenticatedRequest, res: 
     );
     const totalWatchMinutes = Math.round(Number(watchRows[0]?.total_sec || 0) / 60);
 
-    // 4. Upcoming tests belonging to this department's courses
+    // 4. Upcoming scheduled online assessments for this intern
     const [testRows]: any = await pool.query(
       `SELECT COUNT(*) as count 
        FROM test_schedules ts
        JOIN quizzes q ON ts.quiz_id = q.id
-       JOIN courses c ON q.course_id = c.id
-       WHERE c.department_id = ?
-         AND EXISTS (
-           SELECT 1 FROM course_assignments ca
-           WHERE ca.course_id = c.id AND ca.user_id = ?
+       LEFT JOIN courses c ON q.course_id = c.id
+       WHERE ts.is_active = 1 
+         AND (
+           EXISTS (SELECT 1 FROM test_schedule_interns ti WHERE ti.schedule_id = ts.id AND ti.user_id = ?)
+           OR (
+             NOT EXISTS (SELECT 1 FROM test_schedule_interns ti WHERE ti.schedule_id = ts.id)
+             AND (
+               (ts.batch_id IS NOT NULL AND ts.batch_id = ?)
+               OR (ts.batch_id IS NULL AND (
+                 ts.created_by = ? 
+                 OR ts.created_by IN (SELECT id FROM users WHERE role = 'hr_admin')
+                 OR c.department_id = ?
+                 OR c.department_id IS NULL
+                 OR ? = 0
+               ))
+             )
+           )
          )
-         AND ts.is_active = 1 
-         AND ts.end_window >= NOW()
          AND ts.id NOT IN (SELECT test_schedule_id FROM quiz_attempts WHERE user_id = ? AND status = 'submitted')`,
-      [departmentId, userId, userId]
+      [userId, batchId, assignedTlId, departmentId, assignedTlId, userId]
     );
 
     // 5. Pending tasks explicitly assigned to this intern
@@ -738,10 +749,12 @@ export async function getAvailableTests(req: AuthenticatedRequest, res: Response
 
   try {
     const [profileRows]: any = await pool.query(
-      'SELECT department_id, assigned_team_leader_id FROM intern_profiles WHERE user_id = ?',
+      'SELECT department_id, assigned_team_leader_id, batch_id FROM intern_profiles WHERE user_id = ?',
       [userId]
     );
     const departmentId = Number(profileRows[0]?.department_id || 0);
+    const assignedTlId = Number(profileRows[0]?.assigned_team_leader_id || 0);
+    const batchId = profileRows[0]?.batch_id ? Number(profileRows[0].batch_id) : null;
 
     const [tests]: any = await pool.query(
       `SELECT ts.*, q.title as quiz_title, q.instructions, q.duration_minutes, q.passing_marks, q.total_marks,
@@ -749,21 +762,29 @@ export async function getAvailableTests(req: AuthenticatedRequest, res: Response
               (SELECT COUNT(*) FROM quiz_attempts qa2 WHERE qa2.test_schedule_id = ts.id AND qa2.user_id = ? AND qa2.status = 'submitted') as user_attempt_count
        FROM test_schedules ts
        JOIN quizzes q ON ts.quiz_id = q.id
-       JOIN courses c ON q.course_id = c.id
+       LEFT JOIN courses c ON q.course_id = c.id
        LEFT JOIN quiz_attempts qa ON ts.id = qa.test_schedule_id AND qa.user_id = ? AND qa.id = (
           SELECT MAX(qa3.id) FROM quiz_attempts qa3 WHERE qa3.test_schedule_id = ts.id AND qa3.user_id = ?
        )
-       WHERE c.department_id = ? AND ts.is_active = 1
-         AND EXISTS (
-           SELECT 1 FROM course_assignments ca
-           WHERE ca.course_id = c.id AND ca.user_id = ?
-         )
+       WHERE ts.is_active = 1
          AND (
-           NOT EXISTS (SELECT 1 FROM test_schedule_interns ti WHERE ti.schedule_id = ts.id)
-           OR EXISTS (SELECT 1 FROM test_schedule_interns ti2 WHERE ti2.schedule_id = ts.id AND ti2.user_id = ?)
+           EXISTS (SELECT 1 FROM test_schedule_interns ti WHERE ti.schedule_id = ts.id AND ti.user_id = ?)
+           OR (
+             NOT EXISTS (SELECT 1 FROM test_schedule_interns ti WHERE ti.schedule_id = ts.id)
+             AND (
+               (ts.batch_id IS NOT NULL AND ts.batch_id = ?)
+               OR (ts.batch_id IS NULL AND (
+                 ts.created_by = ? 
+                 OR ts.created_by IN (SELECT id FROM users WHERE role = 'hr_admin')
+                 OR c.department_id = ?
+                 OR c.department_id IS NULL
+                 OR ? = 0
+               ))
+             )
+           )
          )
        ORDER BY ts.id DESC`,
-      [userId, userId, userId, departmentId, userId, userId]
+      [userId, userId, userId, userId, batchId, assignedTlId, departmentId, assignedTlId]
     );
     res.json({ tests });
   } catch (error) {
@@ -782,36 +803,42 @@ export async function startTestAttempt(req: AuthenticatedRequest, res: Response)
   }
 
   try {
+    const [profileRows]: any = await pool.query(
+      'SELECT department_id, assigned_team_leader_id, batch_id FROM intern_profiles WHERE user_id = ?',
+      [userId]
+    );
+    const departmentId = Number(profileRows[0]?.department_id || 0);
+    const assignedTlId = Number(profileRows[0]?.assigned_team_leader_id || 0);
+    const batchId = profileRows[0]?.batch_id ? Number(profileRows[0].batch_id) : null;
+
     const [schedules]: any = await pool.query(
       `SELECT ts.*, q.id as quiz_id, q.title, q.duration_minutes, q.total_marks, q.passing_marks,
-              c.department_id
+              c.department_id as course_department_id
        FROM test_schedules ts
        JOIN quizzes q ON ts.quiz_id = q.id
-       JOIN courses c ON q.course_id = c.id
+       LEFT JOIN courses c ON q.course_id = c.id
        WHERE ts.id = ? AND ts.is_active = 1
          AND (
-           NOT EXISTS (SELECT 1 FROM test_schedule_interns ti WHERE ti.schedule_id = ts.id)
-           OR EXISTS (SELECT 1 FROM test_schedule_interns ti2 WHERE ti2.schedule_id = ts.id AND ti2.user_id = ?)
-         )
-         AND EXISTS (
-           SELECT 1 FROM course_assignments ca
-           WHERE ca.course_id = c.id AND ca.user_id = ?
+           EXISTS (SELECT 1 FROM test_schedule_interns ti WHERE ti.schedule_id = ts.id AND ti.user_id = ?)
+           OR (
+             NOT EXISTS (SELECT 1 FROM test_schedule_interns ti WHERE ti.schedule_id = ts.id)
+             AND (
+               (ts.batch_id IS NOT NULL AND ts.batch_id = ?)
+               OR (ts.batch_id IS NULL AND (
+                 ts.created_by = ? 
+                 OR ts.created_by IN (SELECT id FROM users WHERE role = 'hr_admin')
+                 OR c.department_id = ?
+                 OR c.department_id IS NULL
+                 OR ? = 0
+               ))
+             )
+           )
          )`,
-      [test_schedule_id, userId, userId]
+      [test_schedule_id, userId, batchId, assignedTlId, departmentId, assignedTlId]
     );
 
     if (schedules.length === 0) {
       res.status(404).json({ error: 'Test schedule not found or inactive' });
-      return;
-    }
-
-    const [internProfile]: any = await pool.query(
-      'SELECT department_id FROM intern_profiles WHERE user_id = ?',
-      [userId]
-    );
-    const internDepartmentId = Number(internProfile[0]?.department_id || 0);
-    if (!internDepartmentId || Number(schedules[0].department_id) !== internDepartmentId) {
-      res.status(404).json({ error: 'Test not found for your department' });
       return;
     }
 
@@ -1142,6 +1169,8 @@ export async function getCertificateData(req: AuthenticatedRequest, res: Respons
 
     const intern = profileRows[0];
     const departmentId = Number(intern.department_id || 0);
+    const assignedTlId = Number(intern.assigned_team_leader_id || 0);
+    const batchId = intern.batch_id ? Number(intern.batch_id) : null;
 
     // Assigned course modules are complete only after their videos, materials,
     // and course-owned module tests are complete.
@@ -1219,20 +1248,32 @@ export async function getCertificateData(req: AuthenticatedRequest, res: Respons
     const pendingVideos = Math.max(0, totalVideos - completedVideos);
     const pendingMaterials = Math.max(0, totalMaterials - completedMaterials);
 
-    // All scheduled tests must be passed (or none scheduled).
+    // All scheduled tests targeted to this intern must be passed (or none scheduled).
     const [testRows]: any = await pool.query(
       `SELECT COUNT(DISTINCT ts.id) as total_tests,
               COUNT(DISTINCT CASE WHEN qa.id IS NULL THEN ts.id END) as pending_tests
        FROM test_schedules ts
        JOIN quizzes q ON ts.quiz_id = q.id
-       JOIN courses c ON q.course_id = c.id
+       LEFT JOIN courses c ON q.course_id = c.id
        LEFT JOIN quiz_attempts qa ON ts.id = qa.test_schedule_id AND qa.user_id = ? AND qa.is_passed = 1
-       WHERE c.department_id = ? AND c.is_published = 1 AND ts.is_active = 1
-         AND EXISTS (
-           SELECT 1 FROM course_assignments ca
-           WHERE ca.course_id = c.id AND ca.user_id = ?
+       WHERE ts.is_active = 1
+         AND (
+           EXISTS (SELECT 1 FROM test_schedule_interns ti WHERE ti.schedule_id = ts.id AND ti.user_id = ?)
+           OR (
+             NOT EXISTS (SELECT 1 FROM test_schedule_interns ti WHERE ti.schedule_id = ts.id)
+             AND (
+               (ts.batch_id IS NOT NULL AND ts.batch_id = ?)
+               OR (ts.batch_id IS NULL AND (
+                 ts.created_by = ? 
+                 OR ts.created_by IN (SELECT id FROM users WHERE role = 'hr_admin')
+                 OR c.department_id = ?
+                 OR c.department_id IS NULL
+                 OR ? = 0
+               ))
+             )
+           )
          )`,
-      [userId, departmentId, userId]
+      [userId, userId, batchId, assignedTlId, departmentId, assignedTlId]
     );
     const totalTests = Number(testRows[0]?.total_tests || 0);
     const pendingTests = Number(testRows[0]?.pending_tests || 0);

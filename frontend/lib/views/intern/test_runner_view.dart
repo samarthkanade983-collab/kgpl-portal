@@ -229,11 +229,27 @@ class _TestRunnerViewState extends State<TestRunnerView> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const KgplPageHeader(
+          KgplPageHeader(
             title: 'Scheduled Online MCQ Assessments',
             subtitle:
                 'Tests are timed and scheduled by your Team Leader. Ensure an uninterrupted connection before starting.',
             icon: Icons.quiz_outlined,
+            actions: [
+              ElevatedButton.icon(
+                icon: const Icon(Icons.refresh_rounded, size: 16),
+                label: const Text('Refresh'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.white.withOpacity(0.15),
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    side: BorderSide(color: Colors.white.withOpacity(0.3)),
+                  ),
+                ),
+                onPressed: _fetchTests,
+              ),
+            ],
           ),
           const SizedBox(height: 20),
           Expanded(
@@ -244,9 +260,36 @@ class _TestRunnerViewState extends State<TestRunnerView> {
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(color: AppTheme.borderColor),
                     ),
-                    child: const Center(
-                        child: Text(
-                            'No assessments currently scheduled for your department')),
+                    child: Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.quiz_outlined,
+                              size: 48,
+                              color: AppTheme.textMuted.withOpacity(0.6)),
+                          const SizedBox(height: 12),
+                          const Text(
+                            'No assessments currently scheduled for your department',
+                            style: TextStyle(
+                                fontWeight: FontWeight.w600,
+                                color: AppTheme.textSecondary),
+                          ),
+                          const SizedBox(height: 14),
+                          ElevatedButton.icon(
+                            icon: const Icon(Icons.refresh, size: 16),
+                            label:
+                                const Text('Check for Newly Published Tests'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppTheme.primaryBlue,
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8)),
+                            ),
+                            onPressed: _fetchTests,
+                          ),
+                        ],
+                      ),
+                    ),
                   )
                 : ListView.separated(
                     itemCount: _availableTests.length,

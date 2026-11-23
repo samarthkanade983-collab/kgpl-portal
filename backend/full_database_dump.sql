@@ -796,7 +796,7 @@ CREATE TABLE `test_schedules` (
 ) ENGINE=InnoDB AUTO_INCREMENT=26 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 INSERT INTO `test_schedules` (`id`, `quiz_id`, `batch_id`, `created_by`, `start_window`, `end_window`, `max_attempts`, `is_active`, `created_at`, `updated_at`) VALUES
-  (22, 14, NULL, 80, '2026-11-16 03:30:00', '2026-11-23 12:30:00', 1, 1, '2026-11-16 09:17:12', '2026-11-16 09:17:12');
+  (22, 14, NULL, 80, '2026-11-16 03:30:00', '2027-12-31 23:59:59', 1, 1, '2026-11-16 09:17:12', '2026-11-16 09:17:12');
 
 DROP TABLE IF EXISTS `users`;
 CREATE TABLE `users` (
