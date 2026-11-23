@@ -22,4 +22,4 @@ ENV PORT=5000
 ENV JWT_SECRET=kgpl_portal_production_jwt_secret_key_2026_secured
 EXPOSE 5000
 
-CMD ["npm", "start"]
+CMD ["sh", "-c", "node scripts/init-db.mjs && npm start"]
