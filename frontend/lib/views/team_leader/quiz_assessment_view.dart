@@ -721,14 +721,16 @@ class _QuizAssessmentViewState extends State<QuizAssessmentView>
           Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
-              OutlinedButton.icon(
-                icon: const Icon(Icons.add_task_rounded, size: 18),
-                label: const Text('Create Question Paper'),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: AppTheme.primaryBlue,
-                  side: const BorderSide(color: AppTheme.primaryBlue),
+              ElevatedButton.icon(
+                icon: const Icon(Icons.note_add_rounded, size: 18),
+                label: const Text('+ Add New Test / Paper'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF059669),
+                  foregroundColor: Colors.white,
                   padding:
                       const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10)),
                 ),
                 onPressed: () => _showCreateQuizDialog(),
               ),
@@ -1001,6 +1003,27 @@ class _QuizAssessmentViewState extends State<QuizAssessmentView>
                     ),
                   ),
                   const SizedBox(width: 8),
+                  OutlinedButton.icon(
+                    icon: const Icon(Icons.edit_note_rounded, size: 16),
+                    label: const Text('Manage Questions'),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      textStyle: const TextStyle(fontSize: 12),
+                    ),
+                    onPressed: () => _showQuestionPaperStudio(id, title),
+                  ),
+                  const SizedBox(width: 8),
+                  ElevatedButton.icon(
+                    icon: const Icon(Icons.alarm_add_rounded, size: 16),
+                    label: const Text('Schedule'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.primaryBlue,
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                      textStyle: const TextStyle(fontSize: 12),
+                    ),
+                    onPressed: () => _showScheduleModal(preselectedQuizId: id),
+                  ),
+                  const SizedBox(width: 4),
                   Tooltip(
                     message: 'Delete question paper',
                     child: IconButton(

@@ -66,7 +66,7 @@ async function canAssignTaskToInterns(internIds, req) {
 async function ownsSchedule(scheduleId, req) {
     if (isHrAdmin(req))
         return true;
-    const [rows] = await pool.query('SELECT id FROM test_schedules WHERE id = ? AND created_by = ?', [scheduleId, req.user.id]);
+    const [rows] = await pool.query('SELECT id FROM test_schedules WHERE id = ? AND (created_by = ? OR created_by IS NULL OR created_by IN (SELECT id FROM users WHERE role IN ("hr_admin", "team_leader")))', [scheduleId, req.user.id]);
     return rows.length > 0;
 }
 async function ownsQuestion(questionId, req) {
@@ -450,6 +450,7 @@ export async function deleteQuiz(req, res) {
             res.status(404).json({ error: 'Quiz not found' });
             return;
         }
+        await pool.query('DELETE FROM quiz_attempts WHERE quiz_id = ?', [quizId]);
         await pool.query('DELETE FROM quiz_questions WHERE quiz_id = ?', [quizId]);
         await pool.query('DELETE FROM test_schedule_interns WHERE schedule_id IN (SELECT id FROM test_schedules WHERE quiz_id = ?)', [quizId]);
         await pool.query('DELETE FROM test_schedules WHERE quiz_id = ?', [quizId]);
@@ -669,6 +670,7 @@ export async function deleteTestSchedule(req, res) {
             res.status(404).json({ error: 'Test schedule not found' });
             return;
         }
+        await pool.query('DELETE FROM quiz_attempts WHERE test_schedule_id = ?', [scheduleId]);
         await pool.query('DELETE FROM test_schedule_interns WHERE schedule_id = ?', [scheduleId]);
         await pool.query('DELETE FROM test_schedules WHERE id = ?', [scheduleId]);
         res.json({ message: 'Test schedule cancelled and deleted successfully' });
