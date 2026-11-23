@@ -52,7 +52,7 @@ class _MetricCardState extends State<MetricCard> {
             border: Border.all(
               color: _isHovered
                   ? widget.iconColor.withOpacity(0.5)
-                  : const Color(0xFFE2E8F0),
+                  : const Color(0xFF24324D),
               width: _isHovered ? 1.5 : 1.2,
             ),
             boxShadow: [

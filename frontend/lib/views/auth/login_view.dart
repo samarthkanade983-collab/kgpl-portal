@@ -466,12 +466,13 @@ class _LoginViewState extends State<LoginView>
     return Container(
       padding: EdgeInsets.all(compact ? 18 : 32),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: const Color(0xFF111A2E).withOpacity(0.96),
         borderRadius: BorderRadius.circular(compact ? 14 : 20),
+        border: Border.all(color: const Color(0xFF24324D), width: 1.2),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.35),
-            blurRadius: 32,
+            color: Colors.black.withOpacity(0.5),
+            blurRadius: 36,
             offset: const Offset(0, 16),
           ),
         ],
@@ -484,8 +485,9 @@ class _LoginViewState extends State<LoginView>
           Container(
             padding: const EdgeInsets.all(4),
             decoration: BoxDecoration(
-              color: const Color(0xFFF1F5F9),
+              color: const Color(0xFF0A0F1D),
               borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0xFF1E293B)),
             ),
             child: Row(
               children: [
@@ -497,12 +499,12 @@ class _LoginViewState extends State<LoginView>
                       padding: EdgeInsets.symmetric(vertical: compact ? 7 : 10),
                       decoration: BoxDecoration(
                         color:
-                            !_isSignUpMode ? Colors.white : Colors.transparent,
+                            !_isSignUpMode ? const Color(0xFF1E293B) : Colors.transparent,
                         borderRadius: BorderRadius.circular(10),
                         boxShadow: !_isSignUpMode
                             ? [
                                 BoxShadow(
-                                  color: Colors.black.withOpacity(0.08),
+                                  color: Colors.black.withOpacity(0.2),
                                   blurRadius: 8,
                                   offset: const Offset(0, 2),
                                 )
@@ -516,7 +518,7 @@ class _LoginViewState extends State<LoginView>
                             fontSize: compact ? 12.5 : 14,
                             fontWeight: FontWeight.bold,
                             color: !_isSignUpMode
-                                ? AppTheme.primaryNavy
+                                ? Colors.white
                                 : AppTheme.textMuted,
                           ),
                         ),
@@ -532,12 +534,12 @@ class _LoginViewState extends State<LoginView>
                       padding: EdgeInsets.symmetric(vertical: compact ? 7 : 10),
                       decoration: BoxDecoration(
                         color:
-                            _isSignUpMode ? Colors.white : Colors.transparent,
+                            _isSignUpMode ? const Color(0xFF1E293B) : Colors.transparent,
                         borderRadius: BorderRadius.circular(10),
                         boxShadow: _isSignUpMode
                             ? [
                                 BoxShadow(
-                                  color: Colors.black.withOpacity(0.08),
+                                  color: Colors.black.withOpacity(0.2),
                                   blurRadius: 8,
                                   offset: const Offset(0, 2),
                                 )
@@ -551,7 +553,7 @@ class _LoginViewState extends State<LoginView>
                             fontSize: compact ? 12.5 : 14,
                             fontWeight: FontWeight.bold,
                             color: _isSignUpMode
-                                ? AppTheme.primaryNavy
+                                ? Colors.white
                                 : AppTheme.textMuted,
                           ),
                         ),

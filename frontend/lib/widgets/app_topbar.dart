@@ -23,13 +23,13 @@ class AppTopbar extends StatelessWidget implements PreferredSizeWidget {
     return Container(
       height: 68,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: const Color(0xFF0D1526),
         border: const Border(
-            bottom: BorderSide(color: Color(0xFFE2E8F0), width: 1.2)),
+            bottom: BorderSide(color: Color(0xFF1E293B), width: 1.2)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.02),
-            blurRadius: 8,
+            color: Colors.black.withOpacity(0.2),
+            blurRadius: 10,
             offset: const Offset(0, 2),
           ),
         ],
@@ -86,13 +86,13 @@ class AppTopbar extends StatelessWidget implements PreferredSizeWidget {
                     children: [
                       Container(
                         decoration: BoxDecoration(
-                          color: const Color(0xFFF8FAFC),
+                          color: const Color(0xFF131D31),
                           shape: BoxShape.circle,
-                          border: Border.all(color: const Color(0xFFE2E8F0)),
+                          border: Border.all(color: const Color(0xFF24324D)),
                         ),
                         child: IconButton(
                           icon: const Icon(Icons.notifications_none_rounded,
-                              color: Color(0xFF475569), size: 20),
+                              color: Color(0xFF94A3B8), size: 20),
                           tooltip: 'Announcements & Notifications',
                           splashRadius: 20,
                           onPressed: () => AnnouncementsDialog.show(context),
@@ -137,9 +137,9 @@ class AppTopbar extends StatelessWidget implements PreferredSizeWidget {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 14, vertical: 7),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF8FAFC),
+                        color: const Color(0xFF131D31),
                         borderRadius: BorderRadius.circular(24),
-                        border: Border.all(color: const Color(0xFFE2E8F0)),
+                        border: Border.all(color: const Color(0xFF24324D)),
                       ),
                       child: Row(
                         children: [

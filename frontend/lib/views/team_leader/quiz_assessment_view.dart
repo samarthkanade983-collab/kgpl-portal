@@ -751,14 +751,14 @@ class _QuizAssessmentViewState extends State<QuizAssessmentView>
           // Tabs
           Container(
             decoration: const BoxDecoration(
-              border: Border(bottom: BorderSide(color: Color(0xFFE2E8F0))),
+              border: Border(bottom: BorderSide(color: AppTheme.borderColor)),
             ),
             child: TabBar(
               controller: _tabController,
               isScrollable: true,
-              labelColor: AppTheme.primaryBlue,
+              labelColor: AppTheme.accentCyan,
               unselectedLabelColor: AppTheme.textSecondary,
-              indicatorColor: AppTheme.primaryBlue,
+              indicatorColor: AppTheme.accentCyan,
               indicatorWeight: 3,
               tabs: [
                 Tab(
@@ -809,9 +809,9 @@ class _QuizAssessmentViewState extends State<QuizAssessmentView>
       return Container(
         padding: const EdgeInsets.all(40),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppTheme.cardBackground,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: const Color(0xFFE2E8F0)),
+          border: Border.all(color: AppTheme.borderColor),
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -858,12 +858,12 @@ class _QuizAssessmentViewState extends State<QuizAssessmentView>
         return Container(
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppTheme.cardBackground,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(color: AppTheme.borderColor),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.03),
+                color: Colors.black.withOpacity(0.2),
                 blurRadius: 10,
                 offset: const Offset(0, 3),
               ),
@@ -1023,9 +1023,9 @@ class _QuizAssessmentViewState extends State<QuizAssessmentView>
       return Container(
         padding: const EdgeInsets.all(40),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppTheme.cardBackground,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: const Color(0xFFE2E8F0)),
+          border: Border.all(color: AppTheme.borderColor),
         ),
         child: const Center(
             child: Text(
@@ -1035,9 +1035,9 @@ class _QuizAssessmentViewState extends State<QuizAssessmentView>
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppTheme.cardBackground,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(color: AppTheme.borderColor),
       ),
       child: LayoutBuilder(
         builder: (context, constraints) {
@@ -1049,7 +1049,7 @@ class _QuizAssessmentViewState extends State<QuizAssessmentView>
                 scrollDirection: Axis.vertical,
                 child: DataTable(
                   headingRowColor:
-                      WidgetStateProperty.all(const Color(0xFFF8FAFC)),
+                      WidgetStateProperty.all(const Color(0xFF162238)),
                   columns: const [
                     DataColumn(
                         label: Text('Assessment Paper',
