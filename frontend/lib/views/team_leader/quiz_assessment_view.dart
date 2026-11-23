@@ -1111,7 +1111,6 @@ class _QuizAssessmentViewState extends State<QuizAssessmentView>
                     final int attempts = safeInt(s['max_attempts'], 1);
                     final int pending = safeInt(s['pending_reviews']);
                     final int submittedCount = safeInt(s['submitted_count']);
-                    final int totalAttempts = safeInt(s['total_attempts']);
                     final int quizId = safeInt(s['quiz_id']);
 
                     return DataRow(
@@ -2623,7 +2622,6 @@ class _AttemptReviewDialogState extends State<_AttemptReviewDialog> {
                                       final bool isWritten =
                                           q['question_type'] == 'short_answer';
                                       final String answer = (answers[qid.toString()] ??
-                                              answers[qid] ??
                                               '')
                                           .toString()
                                           .trim();

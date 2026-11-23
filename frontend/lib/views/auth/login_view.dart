@@ -19,7 +19,6 @@ class LoginView extends StatefulWidget {
 
 class _LoginViewState extends State<LoginView>
     with SingleTickerProviderStateMixin {
-  bool _isSignUpMode = false;
   final _videoBackgroundKey = GlobalKey<_LoginVideoBackgroundState>();
   final _browserMotion = MotionPreference();
   bool get _reduceMotion =>
@@ -35,21 +34,11 @@ class _LoginViewState extends State<LoginView>
   bool _obscurePassword = true;
   bool _rememberMe = true;
 
-  // Sign Up Controllers
-  final _regNameController = TextEditingController();
-  final _regEmailController = TextEditingController();
-  final _regPasswordController = TextEditingController();
-  int? _regDeptId;
-  bool _obscureRegPassword = true;
-  List<Map<String, dynamic>> _departments = [];
-  bool _departmentsLoading = false;
-
   @override
   void initState() {
     super.initState();
     _browserMotion.addListener(_motionPreferenceChanged);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _loadDepartments();
       _prefillRememberedEmail();
     });
   }
@@ -99,30 +88,12 @@ class _LoginViewState extends State<LoginView>
     }
   }
 
-  Future<void> _loadDepartments() async {
-    if (_departmentsLoading) return;
-    setState(() => _departmentsLoading = true);
-    final auth = Provider.of<AuthProvider>(context, listen: false);
-    final result = await auth.fetchPublicDepartments();
-    if (!mounted) return;
-    setState(() {
-      _departments = result;
-      _departmentsLoading = false;
-      if (_regDeptId == null && result.isNotEmpty) {
-        _regDeptId = (result.first['id'] as num).toInt();
-      }
-    });
-  }
-
   @override
   void dispose() {
     _browserMotion.dispose();
     _ambient.dispose();
     _emailController.dispose();
     _passwordController.dispose();
-    _regNameController.dispose();
-    _regEmailController.dispose();
-    _regPasswordController.dispose();
     super.dispose();
   }
 
@@ -140,51 +111,6 @@ class _LoginViewState extends State<LoginView>
         await auth.login(email, password, rememberMe: _rememberMe);
 
     if (!success && mounted && auth.errorMessage != null) {
-      _showToast(auth.errorMessage!, isError: true);
-    }
-  }
-
-  void _handleRegister() async {
-    final auth = Provider.of<AuthProvider>(context, listen: false);
-    final name = _regNameController.text.trim();
-    final email = _regEmailController.text.trim();
-    final password = _regPasswordController.text;
-
-    if (name.isEmpty || email.isEmpty || password.isEmpty) {
-      _showToast('Please fill in all registration fields', isError: true);
-      return;
-    }
-
-    if (!email.contains('@') || !email.contains('.')) {
-      _showToast('Please enter a valid email address', isError: true);
-      return;
-    }
-
-    if (password.length < 8 ||
-        !password.contains(RegExp(r'[A-Za-z]')) ||
-        !password.contains(RegExp(r'[0-9]'))) {
-      _showToast(
-          'Password must be at least 8 characters and contain letters and numbers',
-          isError: true);
-      return;
-    }
-
-    if (_regDeptId == null) {
-      _showToast('Please select a department', isError: true);
-      return;
-    }
-
-    final success = await auth.register(
-      name: name,
-      email: email,
-      password: password,
-      departmentId: _regDeptId,
-    );
-
-    if (success && mounted) {
-      _showToast('Account created successfully! Welcome to KuhuGrantha.',
-          isError: false);
-    } else if (!success && mounted && auth.errorMessage != null) {
       _showToast(auth.errorMessage!, isError: true);
     }
   }
@@ -480,98 +406,7 @@ class _LoginViewState extends State<LoginView>
         crossAxisAlignment: CrossAxisAlignment.stretch,
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Switcher between Sign In and Sign Up
-          Container(
-            padding: const EdgeInsets.all(4),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF1F5F9),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: InkWell(
-                    onTap: () => setState(() => _isSignUpMode = false),
-                    borderRadius: BorderRadius.circular(10),
-                    child: Container(
-                      padding: EdgeInsets.symmetric(vertical: compact ? 7 : 10),
-                      decoration: BoxDecoration(
-                        color:
-                            !_isSignUpMode ? Colors.white : Colors.transparent,
-                        borderRadius: BorderRadius.circular(10),
-                        boxShadow: !_isSignUpMode
-                            ? [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.08),
-                                  blurRadius: 8,
-                                  offset: const Offset(0, 2),
-                                )
-                              ]
-                            : null,
-                      ),
-                      child: Center(
-                        child: Text(
-                          'Sign In',
-                          style: TextStyle(
-                            fontSize: compact ? 12.5 : 14,
-                            fontWeight: FontWeight.bold,
-                            color: !_isSignUpMode
-                                ? AppTheme.primaryNavy
-                                : AppTheme.textMuted,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-                Expanded(
-                  child: InkWell(
-                    onTap: () => setState(() => _isSignUpMode = true),
-                    borderRadius: BorderRadius.circular(10),
-                    child: Container(
-                      padding: EdgeInsets.symmetric(vertical: compact ? 7 : 10),
-                      decoration: BoxDecoration(
-                        color:
-                            _isSignUpMode ? Colors.white : Colors.transparent,
-                        borderRadius: BorderRadius.circular(10),
-                        boxShadow: _isSignUpMode
-                            ? [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.08),
-                                  blurRadius: 8,
-                                  offset: const Offset(0, 2),
-                                )
-                              ]
-                            : null,
-                      ),
-                      child: Center(
-                        child: Text(
-                          'Sign Up / Register',
-                          style: TextStyle(
-                            fontSize: compact ? 12.5 : 14,
-                            fontWeight: FontWeight.bold,
-                            color: _isSignUpMode
-                                ? AppTheme.primaryNavy
-                                : AppTheme.textMuted,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          SizedBox(height: compact ? 12 : 24),
-
-          if (!_isSignUpMode) ...[
-            // Sign In View
-            _buildSignInFields(auth),
-          ] else ...[
-            // Sign Up View
-            _buildSignUpFields(auth),
-          ],
+          _buildSignInFields(auth),
         ],
       ),
     );
@@ -783,251 +618,34 @@ class _LoginViewState extends State<LoginView>
                   ),
           ),
         ),
-      ],
-    );
-  }
 
-  Widget _buildSignUpFields(AuthProvider auth) {
-    final size = MediaQuery.sizeOf(context);
-    final compact = size.width < 760 || size.height < 780;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Row(
-          children: [
-            Container(
-              width: 4,
-              height: compact ? 18 : 22,
-              decoration: BoxDecoration(
-                color: const Color(0xFF10B981),
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            const SizedBox(width: 10),
-            Text(
-              'Create Account',
-              style: TextStyle(
-                fontSize: compact ? 17 : 22,
-                fontWeight: FontWeight.w800,
-                color: AppTheme.textPrimary,
-                letterSpacing: 0.2,
-              ),
-            ),
-          ],
-        ),
-        SizedBox(height: compact ? 4 : 6),
-        Text(
-          'Register as a new Intern to access training materials.',
-          style: TextStyle(
-              fontSize: compact ? 12 : 13,
-              color: AppTheme.textSecondary),
-        ),
+        // Enterprise Security Footer
         SizedBox(height: compact ? 12 : 18),
-
-        // Full Name Field
-        const Text(
-          'Full Name',
-          style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w700,
-              color: AppTheme.textPrimary),
-        ),
-        SizedBox(height: compact ? 5 : 6),
-        TextField(
-          controller: _regNameController,
-          decoration: InputDecoration(
-            isDense: compact,
-            contentPadding:
-                compact ? const EdgeInsets.symmetric(vertical: 11) : null,
-            prefixIcon: const Icon(Icons.person_outline,
-                size: 20, color: AppTheme.textMuted),
-            hintText: 'e.g. Rahul Sharma',
-            hintStyle: const TextStyle(color: AppTheme.textMuted, fontSize: 13),
-            filled: true,
-            fillColor: const Color(0xFFF8FAFC),
-            border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
-            enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
-            focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide:
-                    const BorderSide(color: Color(0xFF10B981), width: 2)),
-          ),
-        ),
-        SizedBox(height: compact ? 8 : 14),
-
-        // Email Field
-        const Text(
-          'Email Address',
-          style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w700,
-              color: AppTheme.textPrimary),
-        ),
-        SizedBox(height: compact ? 5 : 6),
-        TextField(
-          controller: _regEmailController,
-          keyboardType: TextInputType.emailAddress,
-          decoration: InputDecoration(
-            isDense: compact,
-            contentPadding:
-                compact ? const EdgeInsets.symmetric(vertical: 11) : null,
-            prefixIcon: const Icon(Icons.mail_outline,
-                size: 20, color: AppTheme.textMuted),
-            hintText: 'yourname@kgpl.com',
-            hintStyle: const TextStyle(color: AppTheme.textMuted, fontSize: 13),
-            filled: true,
-            fillColor: const Color(0xFFF8FAFC),
-            border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
-            enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
-            focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide:
-                    const BorderSide(color: Color(0xFF10B981), width: 2)),
-          ),
-        ),
-        SizedBox(height: compact ? 8 : 14),
-
-        // Password Field
-        const Text(
-          'Password',
-          style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w700,
-              color: AppTheme.textPrimary),
-        ),
-        SizedBox(height: compact ? 5 : 6),
-        TextField(
-          controller: _regPasswordController,
-          obscureText: _obscureRegPassword,
-          decoration: InputDecoration(
-            isDense: compact,
-            contentPadding:
-                compact ? const EdgeInsets.symmetric(vertical: 11) : null,
-            prefixIcon: const Icon(Icons.lock_outline,
-                size: 20, color: AppTheme.textMuted),
-            suffixIcon: IconButton(
-              icon: Icon(
-                _obscureRegPassword
-                    ? Icons.visibility_off_outlined
-                    : Icons.visibility_outlined,
-                size: 20,
-                color: AppTheme.textMuted,
-              ),
-              onPressed: () =>
-                  setState(() => _obscureRegPassword = !_obscureRegPassword),
-            ),
-            hintText: 'At least 8 characters with letters and numbers',
-            hintStyle: const TextStyle(color: AppTheme.textMuted, fontSize: 13),
-            filled: true,
-            fillColor: const Color(0xFFF8FAFC),
-            border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
-            enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
-            focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide:
-                    const BorderSide(color: Color(0xFF10B981), width: 2)),
-          ),
-        ),
-        SizedBox(height: compact ? 8 : 14),
-
-        // Department Selector
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('Department',
-                style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    color: AppTheme.textPrimary)),
-            const SizedBox(height: 6),
-            DropdownButtonFormField<int>(
-              value: _regDeptId,
-              items: _departments
-                  .map((dept) => DropdownMenuItem<int>(
-                        value: (dept['id'] as num).toInt(),
-                        child: Text(dept['name']?.toString() ?? '',
-                            style: const TextStyle(fontSize: 13)),
-                      ))
-                  .toList(),
-              onChanged: (v) => setState(() => _regDeptId = v),
-              hint: Text(
-                _departmentsLoading
-                    ? 'Loading departments...'
-                    : 'Select department',
-                style: const TextStyle(fontSize: 13, color: AppTheme.textMuted),
-              ),
-              decoration: InputDecoration(
-                contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                filled: true,
-                fillColor: const Color(0xFFF8FAFC),
-                border:
-                    OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-              ),
-            ),
-          ],
-        ),
-
-        SizedBox(height: compact ? 12 : 22),
-
-        // Register Button
         Container(
-          height: compact ? 42 : 48,
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
           decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [Color(0xFF10B981), Color(0xFF059669)],
-            ),
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: [
-              BoxShadow(
-                color: const Color(0xFF10B981).withOpacity(0.35),
-                blurRadius: 12,
-                offset: const Offset(0, 4),
+            color: const Color(0xFFF8FAFC),
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: const Color(0xFFE2E8F0)),
+          ),
+          child: const Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.lock_outline_rounded,
+                  size: 15, color: Color(0xFF10B981)),
+              SizedBox(width: 8),
+              Flexible(
+                child: Text(
+                  'Secured by Enterprise HTTPS / TLS Encryption • Authorized Access Only',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: AppTheme.textMuted,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
               ),
             ],
-          ),
-          child: ElevatedButton(
-            onPressed: auth.isLoading ? null : _handleRegister,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.transparent,
-              shadowColor: Colors.transparent,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12)),
-            ),
-            child: auth.isLoading
-                ? const SizedBox(
-                    width: 22,
-                    height: 22,
-                    child: CircularProgressIndicator(
-                        color: Colors.white, strokeWidth: 2.5),
-                  )
-                : const Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        'Create Account & Enter Portal',
-                        style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 0.4),
-                      ),
-                      SizedBox(width: 8),
-                      Icon(Icons.arrow_forward_rounded, size: 18),
-                    ],
-                  ),
           ),
         ),
       ],

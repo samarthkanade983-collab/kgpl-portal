@@ -14,11 +14,26 @@ import { protectVideoUpload } from './middleware/auth.js';
 const app = express();
 const PORT = process.env.PORT || 5000;
 app.disable('x-powered-by');
+// Trust reverse proxy (Railway, Render, Cloudflare, Nginx) for secure protocol detection
+app.set('trust proxy', 1);
+// Enforce HTTPS redirection in cloud/production environments
+app.use((req, res, next) => {
+    const host = req.headers.host || '';
+    const isLocal = host.startsWith('localhost') || host.startsWith('127.0.0.1') || host.endsWith('.local');
+    const proto = (req.headers['x-forwarded-proto'] || '').toLowerCase();
+    if (!isLocal && proto && proto !== 'https') {
+        return res.redirect(301, `https://${host}${req.url}`);
+    }
+    next();
+});
 // Baseline security headers for every API response
 app.use((req, res, next) => {
+    // Enforce HTTPS for 1 year with preloading
+    res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
     res.setHeader('X-Content-Type-Options', 'nosniff');
-    res.setHeader('X-Frame-Options', 'DENY');
-    res.setHeader('Referrer-Policy', 'no-referrer');
+    res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+    res.setHeader('X-XSS-Protection', '1; mode=block');
+    res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
     const isApiPath = req.path.startsWith('/api/') || req.path.startsWith('/uploads/') || req.path === '/health';
     res.setHeader('Content-Security-Policy', isApiPath
         ? "default-src 'none'; frame-ancestors 'none'"
