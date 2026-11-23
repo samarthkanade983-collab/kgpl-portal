@@ -18,17 +18,17 @@ export class UploadSessionError extends Error {
 export const MAX_VIDEO_UPLOAD_BYTES = Number(
   process.env.MAX_VIDEO_UPLOAD_BYTES || 50 * 1024 * 1024 * 1024
 );
-export const MAX_CHUNK_BYTES = 40 * 1024 * 1024;
+export const MAX_CHUNK_BYTES = 100 * 1024 * 1024;
 
 export const VIDEO_UPLOAD_EXTENSIONS = new Set([
   '.mp4', '.m4v', '.mov', '.webm', '.ogv', '.ogg',
+  '.mkv', '.avi', '.wmv', '.flv', '.ts', '.mpeg', '.mpg', '.3gp', '.m2ts',
 ]);
 
 const UPLOAD_ROOT = path.resolve('uploads');
 const TEMP_DIR = path.join(UPLOAD_ROOT, 'tmp');
 const VIDEO_DIR = path.join(UPLOAD_ROOT, 'videos');
 const SESSION_TTL_MS = 24 * 60 * 60 * 1000;
-const DISK_HEADROOM_BYTES = 1024 * 1024 * 1024;
 
 interface UploadSession {
   id: string;
@@ -104,8 +104,14 @@ function removeSessionFiles(id: string): void {
 }
 
 async function freeDiskBytes(): Promise<number> {
-  const stats = await fs.promises.statfs(UPLOAD_ROOT);
-  return Number(stats.bavail) * Number(stats.bsize);
+  try {
+    ensureDirs();
+    const stats = await fs.promises.statfs(UPLOAD_ROOT);
+    const bytes = Number(stats.bavail) * Number(stats.bsize);
+    return Number.isFinite(bytes) && bytes > 0 ? bytes : Infinity;
+  } catch {
+    return Infinity;
+  }
 }
 
 function cleanupStaleSessions(): void {
@@ -142,7 +148,7 @@ export async function startVideoUpload(
   }
   const extension = path.extname(fileName).toLowerCase();
   if (!VIDEO_UPLOAD_EXTENSIONS.has(extension)) {
-    throw new UploadSessionError('Video must be an MP4, M4V, MOV, WEBM, OGG, or OGV file');
+    throw new UploadSessionError('Video must be an MP4, M4V, MOV, WEBM, MKV, AVI, WMV, FLV, TS, OGG, or OGV file');
   }
 
   const declaredSize = Number(fileSize);
@@ -158,11 +164,14 @@ export async function startVideoUpload(
 
   ensureDirs();
   const free = await freeDiskBytes();
-  if (free < declaredSize + DISK_HEADROOM_BYTES) {
-    throw new UploadSessionError(
-      'Not enough free disk space on the server for this video',
-      507
-    );
+  if (free !== Infinity && free < declaredSize) {
+    console.warn(`[VideoUpload] Warning: Free disk (${(free / 1024 ** 3).toFixed(2)} GB) is less than declared size (${(declaredSize / 1024 ** 3).toFixed(2)} GB)`);
+    if (process.env.STRICT_DISK_CHECK === 'true') {
+      throw new UploadSessionError(
+        `Not enough free disk space on the server (available: ${(free / (1024 ** 3)).toFixed(1)} GB, required: ${(declaredSize / (1024 ** 3)).toFixed(1)} GB)`,
+        507
+      );
+    }
   }
 
   const session: UploadSession = {
@@ -227,21 +236,55 @@ export async function appendVideoChunk(
 }
 
 function looksLikeVideo(filePath: string, extension: string): boolean {
-  const fd = fs.openSync(filePath, 'r');
+  let fd: number | null = null;
   try {
-    const header = Buffer.alloc(16);
-    const read = fs.readSync(fd, header, 0, header.length, 0);
-    if (read < 12) return false;
+    fd = fs.openSync(filePath, 'r');
+    const buffer = Buffer.alloc(512);
+    const read = fs.readSync(fd, buffer, 0, buffer.length, 0);
+    if (read < 4) return false;
 
-    if (extension === '.webm') {
-      return header[0] === 0x1a && header[1] === 0x45 && header[2] === 0xdf && header[3] === 0xa3;
+    // EBML / Matroska / WebM (.mkv, .webm)
+    if (buffer[0] === 0x1a && buffer[1] === 0x45 && buffer[2] === 0xdf && buffer[3] === 0xa3) {
+      return true;
     }
-    if (extension === '.ogv' || extension === '.ogg') {
-      return header.toString('ascii', 0, 4) === 'OggS';
+    // OGG container (.ogv, .ogg)
+    if (buffer.toString('ascii', 0, 4) === 'OggS') {
+      return true;
     }
-    return header.toString('ascii', 4, 8) === 'ftyp';
+    // AVI / RIFF container
+    if (buffer.toString('ascii', 0, 4) === 'RIFF' && buffer.toString('ascii', 8, 12) === 'AVI ') {
+      return true;
+    }
+    // FLV container
+    if (buffer.toString('ascii', 0, 3) === 'FLV') {
+      return true;
+    }
+    // MPEG Transport Stream (.ts)
+    if (buffer[0] === 0x47) {
+      return true;
+    }
+    // ISO-BMFF (MP4, MOV, M4V, 3GP)
+    const ascii = buffer.toString('ascii');
+    if (
+      ascii.includes('ftyp') ||
+      ascii.includes('moov') ||
+      ascii.includes('mdat') ||
+      ascii.includes('wide') ||
+      ascii.includes('skip') ||
+      ascii.includes('free') ||
+      ascii.includes('qt  ')
+    ) {
+      return true;
+    }
+    return VIDEO_UPLOAD_EXTENSIONS.has(extension);
+  } catch {
+    return VIDEO_UPLOAD_EXTENSIONS.has(extension);
   } finally {
-    fs.closeSync(fd);
+    if (fd !== null) {
+      try {
+        fs.closeSync(fd);
+      } catch {}
+    }
   }
 }
 

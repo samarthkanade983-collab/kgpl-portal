@@ -18,7 +18,7 @@ const router = Router();
 const mediaUploadAccess = [authenticateToken, requireRole(['hr_admin', 'team_leader'])];
 router.post('/uploads/videos', ...mediaUploadAccess, videoUploadController.initVideoUpload);
 router.get('/uploads/videos/:id', ...mediaUploadAccess, videoUploadController.getVideoUploadStatus);
-router.put('/uploads/videos/:id/chunk', ...mediaUploadAccess, raw({ type: 'application/octet-stream', limit: '40mb' }), videoUploadController.putVideoChunk);
+router.put('/uploads/videos/:id/chunk', ...mediaUploadAccess, raw({ type: 'application/octet-stream', limit: '100mb' }), videoUploadController.putVideoChunk);
 router.post('/uploads/videos/:id/complete', ...mediaUploadAccess, videoUploadController.finishVideoUpload);
 router.delete('/uploads/videos/:id', ...mediaUploadAccess, videoUploadController.cancelVideoUpload);
 router.get('/intern/video/:video_id/stream', internController.streamVideo);

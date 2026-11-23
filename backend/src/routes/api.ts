@@ -24,7 +24,7 @@ router.get('/uploads/videos/:id', ...mediaUploadAccess, videoUploadController.ge
 router.put(
   '/uploads/videos/:id/chunk',
   ...mediaUploadAccess,
-  raw({ type: 'application/octet-stream', limit: '40mb' }),
+  raw({ type: 'application/octet-stream', limit: '100mb' }),
   videoUploadController.putVideoChunk
 );
 router.post('/uploads/videos/:id/complete', ...mediaUploadAccess, videoUploadController.finishVideoUpload);

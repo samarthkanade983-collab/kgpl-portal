@@ -1267,7 +1267,20 @@ class _PostVideoDeviceDialogState extends State<_PostVideoDeviceDialog> {
   Future<void> _pickVideo() async {
     try {
       final file = await pickLargeVideo(
-        allowedExtensions: ['mp4', 'webm', 'mov', 'mkv', 'avi', 'm4v'],
+        allowedExtensions: [
+          'mp4',
+          'webm',
+          'mov',
+          'mkv',
+          'avi',
+          'm4v',
+          'ts',
+          'wmv',
+          'flv',
+          'mpeg',
+          'mpg',
+          '3gp'
+        ],
       );
       if (file == null) return;
       setState(() {
@@ -2036,7 +2049,20 @@ class _CourseCurriculumStudioDialogState
           Future<void> pickVideo() async {
             try {
               final file = await pickLargeVideo(
-                allowedExtensions: ['mp4', 'webm', 'mov', 'mkv', 'avi', 'm4v'],
+                allowedExtensions: [
+                  'mp4',
+                  'webm',
+                  'mov',
+                  'mkv',
+                  'avi',
+                  'm4v',
+                  'ts',
+                  'wmv',
+                  'flv',
+                  'mpeg',
+                  'mpg',
+                  '3gp'
+                ],
               );
               if (file == null) return;
               setModalState(() {
@@ -2279,7 +2305,7 @@ class _CourseCurriculumStudioDialogState
                             ),
                             const SizedBox(height: 6),
                             const Text(
-                              'Supports .mp4, .webm, .mov, .mkv, .avi, .m4v up to 50 GB — resumable chunked upload.',
+                              'Supports high-capacity video files (4 GB+ up to 50 GB) in .mp4, .webm, .mov, .mkv, .avi, .m4v, .ts — fast resumable chunked upload.',
                               style: TextStyle(
                                   fontSize: 11, color: AppTheme.textMuted),
                             ),

@@ -9,8 +9,8 @@ import '../config/api_config.dart';
 import '../network/api_service.dart';
 import 'large_video_source.dart';
 
-const int _chunkSize = 32 * 1024 * 1024;
-const int _chunkAttempts = 3;
+const int _chunkSize = 8 * 1024 * 1024;
+const int _chunkAttempts = 5;
 
 class _OffsetMismatch implements Exception {
   final int offset;
