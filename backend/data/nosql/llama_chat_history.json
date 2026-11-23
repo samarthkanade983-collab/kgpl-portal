@@ -1,0 +1,101 @@
+[
+  {
+    "_id": "doc_1794820267852_z8tgn1",
+    "userId": 80,
+    "userName": "Rushikesh Zade",
+    "userRole": "team_leader",
+    "message": "I want to create question paper hel me out",
+    "reply": "1. Define the subject, target grade, and total marks to establish the scope of the exam.\n2. Select a variety of question types like multiple choice and short answers based on the curriculum.\n3. Arrange the questions from simple to complex and proofread for clarity before finalizing the document.",
+    "topic": "gemini_general",
+    "createdAt": "2026-11-16T09:11:07.852Z",
+    "created_at": "2026-11-16T09:11:07.852Z"
+  },
+  {
+    "_id": "doc_1794820299711_nilfaq",
+    "userId": 80,
+    "userName": "Rushikesh Zade",
+    "userRole": "team_leader",
+    "message": "Subject - Itsm",
+    "reply": "An ITSM question paper should cover core frameworks like ITIL 4 and key processes such as incident and change management. You can include multiple choice questions on service value chains and descriptive questions on the difference between problems and incidents. Conclude with a case study asking for a service improvement strategy to test practical application.",
+    "topic": "gemini_general",
+    "createdAt": "2026-11-16T09:11:39.711Z",
+    "created_at": "2026-11-16T09:11:39.711Z"
+  },
+  {
+    "_id": "doc_1794897416199_f9shml",
+    "userId": 80,
+    "userName": "Rushikesh Zade",
+    "userRole": "team_leader",
+    "message": "where is kgpl located",
+    "reply": "KuhuGrantha Private Limited is located in Pune, Maharashtra, India. It serves as the central hub for the company's administrative and technical operations.",
+    "topic": "gemini_general",
+    "createdAt": "2026-11-17T06:36:56.194Z",
+    "created_at": "2026-11-17T06:36:56.199Z"
+  },
+  {
+    "_id": "doc_1794897985273_m4k4mb",
+    "userId": 80,
+    "userName": "Rushikesh Zade",
+    "userRole": "team_leader",
+    "message": "Tell me abot kgpl",
+    "reply": "KuhuGrantha Private Limited, abbreviated as KGPL, is an enterprise IT solutions and recruitment services provider based in Kalyan, Maharashtra. The company specializes in cloud services, cybersecurity, software development, and IT infrastructure management for businesses across India. They also offer digital marketing and talent acquisition services. Source: https://kuhugrantha.com/",
+    "topic": "gemini_general",
+    "createdAt": "2026-11-17T06:46:25.273Z",
+    "created_at": "2026-11-17T06:46:25.273Z"
+  },
+  {
+    "_id": "doc_1794975236544_6emjd8",
+    "userId": 78,
+    "userName": "HR Administrator",
+    "userRole": "hr_admin",
+    "message": "Help me write a short professional email. Ask what it needs to say.",
+    "reply": "I would be happy to assist you with drafting a professional email. Please provide the name or role of the recipient, the primary purpose of the message, and any key details or deadlines that must be included. Once you share these specifics, I will provide a clear and concise version for your review.",
+    "topic": "gemini_general",
+    "createdAt": "2026-11-18T04:13:56.544Z",
+    "created_at": "2026-11-18T04:13:56.544Z"
+  },
+  {
+    "_id": "doc_1794982283889_w1c11s",
+    "userId": 81,
+    "userName": "Samarth Kanade",
+    "userRole": "intern",
+    "message": "Help me write a short professional email. Ask what it needs to say.",
+    "reply": "I would be happy to help you draft a professional email. Please provide the recipient's role, the main purpose of the message, and any specific points you want to include. Once I have those details, I can provide a concise draft for you.",
+    "topic": "gemini_general",
+    "createdAt": "2026-11-18T06:11:23.889Z",
+    "created_at": "2026-11-18T06:11:23.889Z"
+  },
+  {
+    "_id": "doc_1794982309408_6z4r0t",
+    "userId": 81,
+    "userName": "Samarth Kanade",
+    "userRole": "intern",
+    "message": "What is Cpu?",
+    "reply": "A Central Processing Unit or CPU is the primary component of a computer that acts as its brain. It interprets and executes instructions from hardware and software to perform calculations and manage data flow. Every action you take on a device, from moving a mouse to running an application, relies on the CPU to process the necessary commands.",
+    "topic": "gemini_general",
+    "createdAt": "2026-11-18T06:11:49.408Z",
+    "created_at": "2026-11-18T06:11:49.408Z"
+  },
+  {
+    "_id": "doc_1794982343613_gcibyy",
+    "userId": 81,
+    "userName": "Samarth Kanade",
+    "userRole": "intern",
+    "message": "What is difference between mac address and ip address",
+    "reply": "A MAC address is a permanent physical identifier assigned to a device's network hardware by the manufacturer. In contrast, an IP address is a temporary logical address assigned by a network to identify a device's current location. While MAC addresses handle local communication within a network segment, IP addresses enable routing data across different networks globally.",
+    "topic": "gemini_general",
+    "createdAt": "2026-11-18T06:12:23.613Z",
+    "created_at": "2026-11-18T06:12:23.613Z"
+  },
+  {
+    "_id": "doc_1794982374795_81fz6o",
+    "userId": 81,
+    "userName": "Samarth Kanade",
+    "userRole": "intern",
+    "message": "full form of both",
+    "reply": "MAC stands for Media Access Control. IP stands for Internet Protocol. These terms represent the standards used to identify network hardware and route data across the internet.",
+    "topic": "gemini_general",
+    "createdAt": "2026-11-18T06:12:54.795Z",
+    "created_at": "2026-11-18T06:12:54.795Z"
+  }
+]

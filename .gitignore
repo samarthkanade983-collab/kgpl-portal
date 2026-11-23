@@ -1,0 +1,44 @@
+# Databases & portable binaries
+portable-db/
+mysql-portable/
+mongodb-portable/
+*.log
+*.tmp
+*.sqlite
+
+# Dependencies
+node_modules/
+backend/node_modules/
+npm-debug.log*
+
+# Flutter / Dart
+frontend/.dart_tool/
+frontend/.packages
+frontend/.pub/
+frontend/.flutter-plugins
+frontend/.flutter-plugins-dependencies
+frontend/build/cache/
+frontend/build/app/
+frontend/build/linux/
+frontend/build/windows/
+frontend/build/macos/
+frontend/build/ios/
+
+# Uploads & media cache (large videos)
+backend/uploads/videos/*.mp4
+backend/uploads/temp/
+
+# Environment & logs
+api.tmp.log
+run.log
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+*.env
+backend/.env

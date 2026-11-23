@@ -1,0 +1,20 @@
+KGPL Portal - Testing Package
+=============================
+
+1. Install Node.js 20.19 or newer and MySQL 8.
+
+2. Open a Command Prompt in this folder and load the database:
+   mysql -u root -p -e "CREATE DATABASE IF NOT EXISTS kgpl_portal;"
+   mysql -u root -p kgpl_portal < database_schema.sql
+   mysql -u root -p kgpl_portal < seed_demo.sql
+
+3. Double-click START_PORTAL.bat (or run: node start.js).
+   The first run installs what the server needs, then opens the portal.
+
+4. Sign in at http://localhost:3002 with hr@kgpl.com / Admin@123.
+
+Do not run "npm run build" - the web app is already built.
+If you opened this folder in an editor, start it with the "Start Portal"
+task or the batch file above.
+
+See SETUP.md for details and troubleshooting.

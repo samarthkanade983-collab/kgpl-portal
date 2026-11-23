@@ -1,0 +1,14 @@
+{
+  "name": "kgpl-portal-modern",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "KGPL Intern Training Portal - one command starts the API and the web portal",
+  "scripts": {
+    "start": "node start.js",
+    "dev": "node start.js --watch"
+  },
+  "engines": {
+    "node": ">=20.19"
+  }
+}
