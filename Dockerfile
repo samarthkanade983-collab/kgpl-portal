@@ -19,6 +19,7 @@ RUN npm run build
 # Production settings
 ENV NODE_ENV=production
 ENV PORT=5000
+ENV JWT_SECRET=kgpl_portal_production_jwt_secret_key_2026_secured
 EXPOSE 5000
 
 CMD ["npm", "start"]
