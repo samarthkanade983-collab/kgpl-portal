@@ -16,6 +16,9 @@ COPY frontend/build/web ./frontend/build/web
 WORKDIR /app/backend
 RUN npm run build
 
+# Ensure uploads directories exist inside the container with proper permissions
+RUN mkdir -p /app/backend/uploads/videos /app/backend/uploads/tmp && chmod -R 777 /app/backend/uploads
+
 # Production settings
 ENV NODE_ENV=production
 ENV PORT=5000
