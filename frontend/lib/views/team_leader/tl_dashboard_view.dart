@@ -180,23 +180,6 @@ class _TlDashboardViewState extends State<TlDashboardView> {
                         spacing: 8,
                         runSpacing: 8,
                         children: [
-                          ElevatedButton.icon(
-                            icon:
-                                const Icon(Icons.video_call_rounded, size: 16),
-                            label: const Text('+ Post Video to Interns',
-                                style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 12.5)),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF6366F1),
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 14, vertical: 11),
-                              shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10)),
-                            ),
-                            onPressed: _showPostVideoModal,
-                          ),
                           OutlinedButton.icon(
                             icon: const Icon(Icons.auto_stories_rounded,
                                 size: 16, color: Colors.white),
